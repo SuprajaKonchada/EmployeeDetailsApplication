@@ -1,56 +1,55 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using EmployeeDetailsApplication.Data;
-using EmployeeDetailsApplication.Models;
+﻿using EmployeeDetailsApplication.Repositories;
+using EmployeeDetailsApplication.Services;
 using Microsoft.EntityFrameworkCore;
 
-namespace EmployeeDetailsApplication.Repositories
+namespace EmployeeDetailsApplication.Data
 {
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
-        protected readonly AppDbContext _context;
-        protected readonly DbSet<T> _dbSet;
+        private readonly AppDbContext _context;
+        private readonly DbSet<T> _dbSet;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public GenericRepository(AppDbContext context)
+        public GenericRepository(AppDbContext context, IUnitOfWork unitOfWork)
         {
             _context = context;
             _dbSet = context.Set<T>();
+            _unitOfWork = unitOfWork;
         }
 
-        public async Task<T> GetByIdAsync(int id)
+        public T GetById(int id)
         {
-            return await _dbSet.FindAsync(id);
+            return _dbSet.Find(id);
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync()
+        public IQueryable<T> GetAll()
         {
-            return await _dbSet.ToListAsync();
+            return _dbSet.AsQueryable();
         }
 
-        public async Task CreateAsync(T entity)
+
+        public void Create(T entity)
         {
-            await _dbSet.AddAsync(entity);
+            _dbSet.Add(entity);
         }
 
-        public async Task UpdateAsync(T entity)
+        public void Update(T entity)
         {
             _dbSet.Update(entity);
         }
 
-        public async Task DeleteAsync(int id)
+        public void Delete(int id)
         {
-            T entity = await GetByIdAsync(id);
+            T entity = GetById(id);
             if (entity != null)
             {
                 _dbSet.Remove(entity);
             }
         }
 
-        public async Task SaveAsync()
+        public void Save()
         {
-            await _context.SaveChangesAsync();
+            _unitOfWork.SaveChanges();
         }
     }
 }

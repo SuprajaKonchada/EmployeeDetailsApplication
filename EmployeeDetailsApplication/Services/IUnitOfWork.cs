@@ -1,6 +1,4 @@
-﻿using EmployeeDetailsApplication.Models;
-using EmployeeDetailsApplication.Repositories;
-using System;
+﻿using EmployeeDetailsApplication.Data;
 
 namespace EmployeeDetailsApplication.Services
 {
@@ -8,5 +6,4 @@ namespace EmployeeDetailsApplication.Services
     {
         void SaveChanges();
     }
-
 }

@@ -1,6 +1,7 @@
 using EmployeeDetailsApplication.Data;
 using EmployeeDetailsApplication.Repositories;
 using EmployeeDetailsApplication.Services;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 
 namespace EmployeeDetailsApplication
@@ -18,7 +19,6 @@ namespace EmployeeDetailsApplication
             builder.Services.AddControllersWithViews();
 
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-            builder.Services.AddScoped<EmployeeService>();
             builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             var app = builder.Build();
 
@@ -39,7 +39,7 @@ namespace EmployeeDetailsApplication
 
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
+                pattern: "{controller=Employees}/{action=Index}/{id?}");
 
             app.Run();
         }

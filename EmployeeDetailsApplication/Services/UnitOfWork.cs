@@ -12,11 +12,16 @@ namespace EmployeeDetailsApplication.Services
         {
             _context = context;
         }
+        public AppDbContext Context
+        {
+            get { return _context; }
+        }
 
         public void SaveChanges()
         {
-            _context.SaveChanges();
+            _context.SaveChangesAsync();
         }
     }
+
 
 }

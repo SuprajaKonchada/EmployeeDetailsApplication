@@ -5,6 +5,8 @@ namespace EmployeeDetailsApplication.Data
 {
     public class AppDbContext : DbContext
     {
+        internal object _unitOfWork;
+
         // Define DbSet properties for your models
         public required DbSet<Employee> Employees { get; set; }
         public required DbSet<Department> Departments { get; set; }

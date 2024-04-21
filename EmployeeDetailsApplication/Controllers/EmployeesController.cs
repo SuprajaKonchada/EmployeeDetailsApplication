@@ -1,10 +1,11 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using EmployeeDetailsApplication.Data;
 using EmployeeDetailsApplication.Models;
 using EmployeeDetailsApplication.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace EmployeeDetailsApplication.Controllers
 {
@@ -20,22 +21,28 @@ namespace EmployeeDetailsApplication.Controllers
         }
 
         // GET: Employees
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            var appDbContext = _employeeRepository.GetAllAsync();
-            return View(await appDbContext);
+            var employees = _employeeRepository.GetAll()
+                                               .Include(e => e.Department) // Eager load the Department
+                                               .ToList();
+            return View(employees);
         }
 
 
         // GET: Employees/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public IActionResult Details(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var employee = await _employeeRepository.GetByIdAsync(id.Value);
+            // Eagerly load the Department navigation property
+            var employee = _employeeRepository.GetAll()
+                                              .Include(e => e.Department) // Include the Department
+                                              .FirstOrDefault(e => e.EmployeeId == id.Value);
+
             if (employee == null)
             {
                 return NotFound();
@@ -44,10 +51,11 @@ namespace EmployeeDetailsApplication.Controllers
             return View(employee);
         }
 
+
         // GET: Employees/Create
-        public async Task<IActionResult> Create()
+        public IActionResult Create()
         {
-            var departments = await _departmentRepository.GetAllAsync();
+            var departments = _departmentRepository.GetAll();
             ViewData["DepartmentName"] = new SelectList(departments, "DepartmentId", "DepartmentName");
             return View();
         }
@@ -55,33 +63,33 @@ namespace EmployeeDetailsApplication.Controllers
         // POST: Employees/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EmployeeId,Name,DepartmentId,Details,Experience,EmployeeSkill,EmployeeProject")] Employee employee)
+        public IActionResult Create([Bind("EmployeeId,Name,DepartmentId,Details,Experience,EmployeeSkill,EmployeeProject")] Employee employee)
         {
             if (ModelState.IsValid)
             {
-                await _employeeRepository.CreateAsync(employee);
-                await _employeeRepository.SaveAsync();
+                _employeeRepository.Create(employee);
+                _employeeRepository.Save();
                 return RedirectToAction(nameof(Index));
             }
-            var departments = await _departmentRepository.GetAllAsync();
+            var departments = _departmentRepository.GetAll();
             ViewData["DepartmentName"] = new SelectList(departments, "DepartmentId", "DepartmentName", employee.DepartmentId);
             return View(employee);
         }
 
         // GET: Employees/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public IActionResult Edit(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var employee = await _employeeRepository.GetByIdAsync(id.Value);
+            var employee = _employeeRepository.GetById(id.Value);
             if (employee == null)
             {
                 return NotFound();
             }
-            var departments = await _departmentRepository.GetAllAsync();
+            var departments = _departmentRepository.GetAll();
             ViewData["DepartmentName"] = new SelectList(departments, "DepartmentId", "DepartmentName", employee.DepartmentId);
             return View(employee);
         }
@@ -89,7 +97,7 @@ namespace EmployeeDetailsApplication.Controllers
         // POST: Employees/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("EmployeeId,Name,DepartmentId,Details,Experience,EmployeeSkill,EmployeeProject")] Employee employee)
+        public IActionResult Edit(int id, [Bind("EmployeeId,Name,DepartmentId,Details,Experience,EmployeeSkill,EmployeeProject")] Employee employee)
         {
             if (id != employee.EmployeeId)
             {
@@ -100,36 +108,43 @@ namespace EmployeeDetailsApplication.Controllers
             {
                 try
                 {
-                    await _employeeRepository.UpdateAsync(employee);
-                    await _employeeRepository.SaveAsync();
+                    _employeeRepository.Update(employee);
+                    _employeeRepository.Save(); // Ensure Save() commits changes
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!(await EmployeeExists(id)))
+                    if (!EmployeeExists(id))
                     {
                         return NotFound();
                     }
                     else
                     {
-                        throw;
+                        throw; // Rethrow the exception for further investigation
                     }
                 }
                 return RedirectToAction(nameof(Index));
             }
-            var departments = await _departmentRepository.GetAllAsync();
+
+            // If we reach this point, it means the model state is invalid
+            var departments = _departmentRepository.GetAll();
             ViewData["DepartmentName"] = new SelectList(departments, "DepartmentId", "DepartmentName", employee.DepartmentId);
             return View(employee);
         }
 
+
         // GET: Employees/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        public IActionResult Delete(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var employee = await _employeeRepository.GetByIdAsync(id.Value);
+            // Eagerly load the Department navigation property
+            var employee = _employeeRepository.GetAll()
+                                              .Include(e => e.Department) // Include the Department
+                                              .FirstOrDefault(e => e.EmployeeId == id.Value);
+
             if (employee == null)
             {
                 return NotFound();
@@ -138,19 +153,22 @@ namespace EmployeeDetailsApplication.Controllers
             return View(employee);
         }
 
+
         // POST: Employees/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public IActionResult DeleteConfirmed(int id)
         {
-            await _employeeRepository.DeleteAsync(id);
-            await _employeeRepository.SaveAsync();
+            _employeeRepository.Delete(id);
+            _employeeRepository.Save();
             return RedirectToAction(nameof(Index));
         }
 
-        private async Task<bool> EmployeeExists(int id)
+        private bool EmployeeExists(int id)
         {
-            return (await _employeeRepository.GetByIdAsync(id)) != null;
+            return _employeeRepository.GetById(id) != null;
         }
+        
+
     }
 }
